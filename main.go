@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"strings"
 
+	"github.com/tidwall/pretty"
 	"golang.org/x/net/websocket"
 )
 
@@ -111,6 +112,8 @@ func read(ws *websocket.Conn) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("<< %s\n", msg[:n])
+		text := msg[:n]
+		result := pretty.Color(pretty.Pretty(text), nil)
+		fmt.Printf("<< %s\n", result)
 	}
 }
