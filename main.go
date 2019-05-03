@@ -28,8 +28,9 @@ func (h *headers) Set(value string) error {
 
 func main() {
 	var (
-		target  = flag.String("u", "", "The URL to connect to")
-		origin  = flag.String("o", "", "The origin to use in the WS request")
+		target  = flag.String("u", "ws://localhost:8080/api/v1/kubeql", "The URL to connect to")
+		origin  = flag.String("o", "http://localhost:8080", "The origin to use in the WS request")
+		cmdText = flag.String("c", "", "The initial command to end to the WS request")
 		h       headers
 		origURL *url.URL
 	)
@@ -52,6 +53,9 @@ func main() {
 	}
 	ws := connect(*target, makeHeader(h), origURL)
 	trapCtrlC(ws)
+	if *cmdText != "" {
+		writeText(ws, *cmdText)
+	}
 	go write(ws)
 	read(ws)
 }
@@ -99,9 +103,13 @@ func write(ws *websocket.Conn) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		t := scanner.Text()
-		ws.Write([]byte(t))
-		fmt.Printf(">> %s\n", t)
+		writeText(ws, t)
 	}
+}
+
+func writeText(ws *websocket.Conn, t string) {
+	ws.Write([]byte(t))
+	fmt.Printf(">> %s\n", t)
 }
 
 // Read from websocket and print messages to STDOUT
