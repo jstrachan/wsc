@@ -26,17 +26,24 @@ func (h *headers) Set(value string) error {
 	return nil
 }
 
+var useColor = true
+
 func main() {
 	var (
-		target  = flag.String("u", "ws://localhost:8080/api/v1/kubeql", "The URL to connect to")
-		origin  = flag.String("o", "http://localhost:8080", "The origin to use in the WS request")
-		cmdText = flag.String("c", "", "The initial command to end to the WS request")
-		h       headers
-		origURL *url.URL
+		target   = flag.String("u", "ws://localhost:8080/api/v1/kubeql", "The URL to connect to")
+		origin   = flag.String("o", "http://localhost:8080", "The origin to use in the WS request")
+		cmdText  = flag.String("c", "", "The initial command to end to the WS request")
+		noColour = flag.Bool("p", false, "Use plain (no colour) output")
+		h        headers
+		origURL  *url.URL
 	)
 	flag.Var(&h, "H", `Headers to use in the WS request, can be used to multiple times to specify multiple headers.`+
 		` Example: -H "Sample-Header-1: foo" -H "Sample-Header-2: bar"`)
 	flag.Parse()
+
+	if noColour != nil && *noColour {
+		useColor = false
+	}
 
 	if *target == "" {
 		fmt.Fprintf(os.Stderr, "missing url\n")
@@ -121,7 +128,10 @@ func read(ws *websocket.Conn) {
 			log.Fatal(err)
 		}
 		text := msg[:n]
-		result := pretty.Color(pretty.Pretty(text), nil)
+		result := pretty.Pretty(text)
+		if useColor {
+			result = pretty.Color(result, nil)
+		}
 		fmt.Printf("<< %s\n", result)
 	}
 }
